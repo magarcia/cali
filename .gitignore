@@ -1,0 +1,15 @@
+/target
+
+# Coverage artifacts
+*.profraw
+*.profdata
+coverage.lcov
+/coverage/
+/target/llvm-cov/
+/target/llvm-cov-target/
+
+# npm artifacts
+npm/bin/git-workon
+npm/node_modules/
+npm/*.tgz
+npm/package-lock.json

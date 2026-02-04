@@ -1,0 +1,23 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "../target/debug/sentinel",
+            "type": "command"
+          },
+          {
+            "command": "sentinel",
+            "type": "command"
+          },
+          {
+            "command": "agent-sentinel",
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      }
+    ]
+  }
+}

@@ -1,0 +1,43 @@
+[package]
+name = "cali"
+version = "0.1.0"
+edition = "2024"
+description = "A minimalist, offline-first CLI calendar"
+authors = ["Martin Garcia"]
+license = "MIT"
+repository = "https://github.com/magarcia/cali"
+
+[dependencies]
+clap = { version = "4", features = ["derive", "suggestions"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs", "process"] }
+miette = { version = "7", features = ["fancy"] }
+thiserror = "2"
+serde = { version = "1", features = ["derive", "rc"] }
+bincode = "1"
+toml = "0.8"
+directories = "5"
+crossterm = "0.28"
+inquire = "0.7"
+indicatif = "0.17"
+futures = "0.3"
+chrono = { version = "0.4", features = ["serde"] }
+chrono-english = "0.1"
+chrono-tz = "0.8"
+ical = "0.11"
+rrule = "0.12"
+reqwest = { version = "0.12", features = ["rustls-tls"] }
+fs2 = "0.4"
+ctrlc = "3"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
+wiremock = "0.6"
+tempfile = "3"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
