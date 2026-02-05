@@ -1,4 +1,4 @@
-use super::Paths;
+use super::{Paths, SecureStorage};
 use crate::error::{CaliError, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -7,7 +7,8 @@ use std::fs;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CalendarSource {
     pub name: String,
-    pub url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
     #[serde(default = "default_color")]
     pub color: String,
     #[serde(default)]
@@ -57,6 +58,8 @@ pub struct Config {
     pub display: DisplayConfig,
     #[serde(default)]
     pub sync: SyncConfig,
+    #[serde(default)]
+    pub credentials_migrated: bool,
 }
 
 pub struct ConfigLoader {
@@ -89,6 +92,35 @@ impl ConfigLoader {
             config.sync.cache_window_days = default_cache_window();
         }
 
+        // Migrate credentials to secure storage if needed
+        if !config.credentials_migrated {
+            #[cfg(test)]
+            let secure_storage = SecureStorage::new_for_testing(self.paths.config_dir());
+            #[cfg(not(test))]
+            let secure_storage = SecureStorage::new(self.paths.config_dir());
+            let mut needs_save = false;
+
+            for source in &mut config.sources {
+                if let Some(url) = source.url.take() {
+                    secure_storage.store_url(&source.name, &url)?;
+                    needs_save = true;
+                }
+            }
+
+            config.credentials_migrated = true;
+
+            if needs_save {
+                self.save(&config)?;
+
+                if secure_storage.backend() == super::CredentialBackend::EncryptedFile {
+                    eprintln!(
+                        "Warning: System keychain not available. Calendar URLs are stored in an encrypted file.\n\
+                         The file is encrypted using your machine ID, but for maximum security, consider using a system with keychain support."
+                    );
+                }
+            }
+        }
+
         Ok(config)
     }
 
@@ -110,6 +142,28 @@ impl ConfigLoader {
 
     pub fn exists(&self) -> bool {
         self.paths.config_file().exists()
+    }
+
+    pub fn get_source_with_url(&self, name: &str) -> Result<(CalendarSource, String)> {
+        let config = self.load()?;
+        let source = config
+            .sources
+            .iter()
+            .find(|s| s.name == name)
+            .ok_or_else(|| CaliError::SourceNotFound {
+                name: name.to_string(),
+            })?
+            .clone();
+
+        #[cfg(test)]
+        let secure_storage = SecureStorage::new_for_testing(self.paths.config_dir());
+        #[cfg(not(test))]
+        let secure_storage = SecureStorage::new(self.paths.config_dir());
+        let url = secure_storage
+            .get_url(name)?
+            .ok_or_else(|| CaliError::credential_not_found(name.to_string()))?;
+
+        Ok((source, url))
     }
 }
 
@@ -146,6 +200,8 @@ mod tests {
     fn test_calendar_source_deserialize_default_color() {
         let toml = "name = \"test\"\nurl = \"https://example.com\"";
         let source: CalendarSource = toml::from_str(toml).unwrap();
+        assert_eq!(source.name, "test");
+        assert_eq!(source.url, Some("https://example.com".to_string()));
         assert_eq!(source.color, "white");
     }
 
@@ -153,6 +209,8 @@ mod tests {
     fn test_calendar_source_deserialize_with_color() {
         let toml = "name = \"test\"\nurl = \"https://example.com\"\ncolor = \"#ff0000\"";
         let source: CalendarSource = toml::from_str(toml).unwrap();
+        assert_eq!(source.name, "test");
+        assert_eq!(source.url, Some("https://example.com".to_string()));
         assert_eq!(source.color, "#ff0000");
     }
 
@@ -176,5 +234,162 @@ mod tests {
         assert!(config.sources.is_empty());
         assert_eq!(config.display.time_format, "");
         assert_eq!(config.sync.sync_interval_minutes, 0);
+        assert!(!config.credentials_migrated);
+    }
+
+    #[test]
+    fn test_calendar_source_with_optional_url() {
+        let toml = "name = \"test\"\ncolor = \"#ff0000\"";
+        let source: CalendarSource = toml::from_str(toml).unwrap();
+        assert_eq!(source.name, "test");
+        assert_eq!(source.url, None);
+        assert_eq!(source.color, "#ff0000");
+    }
+
+    #[test]
+    fn test_migration_from_old_config() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let paths = Paths::with_base(temp_dir.path());
+        let config_loader = ConfigLoader::new(paths.clone());
+
+        let old_config_toml = r##"
+[[sources]]
+name = "work"
+url = "https://example.com/work.ics"
+color = "#ff0000"
+
+[[sources]]
+name = "personal"
+url = "https://example.com/personal.ics"
+color = "#00ff00"
+"##;
+
+        fs::write(paths.config_file(), old_config_toml).unwrap();
+
+        let config = config_loader.load().unwrap();
+
+        assert_eq!(config.sources.len(), 2);
+        assert!(config.sources[0].url.is_none());
+        assert!(config.sources[1].url.is_none());
+        assert!(config.credentials_migrated);
+
+        let secure_storage = SecureStorage::new_for_testing(paths.config_dir());
+        let work_url = secure_storage.get_url("work").unwrap();
+        let personal_url = secure_storage.get_url("personal").unwrap();
+
+        assert_eq!(work_url, Some("https://example.com/work.ics".to_string()));
+        assert_eq!(
+            personal_url,
+            Some("https://example.com/personal.ics".to_string())
+        );
+    }
+
+    #[test]
+    fn test_migration_idempotent() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let paths = Paths::with_base(temp_dir.path());
+        let config_loader = ConfigLoader::new(paths.clone());
+
+        let old_config_toml = r##"
+[[sources]]
+name = "work"
+url = "https://example.com/work.ics"
+color = "#ff0000"
+"##;
+
+        fs::write(paths.config_file(), old_config_toml).unwrap();
+
+        let config1 = config_loader.load().unwrap();
+        assert!(config1.credentials_migrated);
+
+        let config2 = config_loader.load().unwrap();
+        assert!(config2.credentials_migrated);
+        assert_eq!(config1.sources.len(), config2.sources.len());
+    }
+
+    #[test]
+    fn test_migration_marks_complete_even_without_urls() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let paths = Paths::with_base(temp_dir.path());
+        let config_loader = ConfigLoader::new(paths.clone());
+
+        let new_config_toml = r##"
+credentials_migrated = false
+
+[[sources]]
+name = "work"
+color = "#ff0000"
+"##;
+
+        fs::write(paths.config_file(), new_config_toml).unwrap();
+
+        let config = config_loader.load().unwrap();
+        assert!(config.credentials_migrated);
+    }
+
+    #[test]
+    fn test_get_source_with_url() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let paths = Paths::with_base(temp_dir.path());
+        let config_loader = ConfigLoader::new(paths.clone());
+        let secure_storage = SecureStorage::new_for_testing(paths.config_dir());
+
+        secure_storage
+            .store_url("test", "https://example.com/test.ics")
+            .unwrap();
+
+        let config = Config {
+            sources: vec![CalendarSource {
+                name: "test".to_string(),
+                url: None,
+                color: "#ff0000".to_string(),
+                last_sync: None,
+            }],
+            credentials_migrated: true,
+            ..Default::default()
+        };
+
+        config_loader.save(&config).unwrap();
+
+        let (source, url) = config_loader.get_source_with_url("test").unwrap();
+        assert_eq!(source.name, "test");
+        assert_eq!(url, "https://example.com/test.ics");
+    }
+
+    #[test]
+    fn test_get_source_with_url_not_found() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let paths = Paths::with_base(temp_dir.path());
+        let config_loader = ConfigLoader::new(paths.clone());
+
+        let config = Config {
+            sources: vec![CalendarSource {
+                name: "test-no-creds".to_string(),
+                url: None,
+                color: "#ff0000".to_string(),
+                last_sync: None,
+            }],
+            credentials_migrated: true,
+            ..Default::default()
+        };
+
+        config_loader.save(&config).unwrap();
+
+        let result = config_loader.get_source_with_url("test-no-creds");
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            CaliError::CredentialNotFound { .. }
+        ));
     }
 }

@@ -39,6 +39,10 @@ impl Paths {
         })
     }
 
+    pub fn config_dir(&self) -> PathBuf {
+        self.config_dir.clone()
+    }
+
     pub fn config_file(&self) -> PathBuf {
         self.config_dir.join("config.toml")
     }

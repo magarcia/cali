@@ -13,6 +13,7 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs", "process
 miette = { version = "7", features = ["fancy"] }
 thiserror = "2"
 serde = { version = "1", features = ["derive", "rc"] }
+serde_json = "1"
 bincode = "1"
 toml = "0.8"
 directories = "5"
@@ -28,6 +29,12 @@ rrule = "0.12"
 reqwest = { version = "0.12", features = ["rustls-tls"] }
 fs2 = "0.4"
 ctrlc = "3"
+keyring = { version = "3.6", features = ["apple-native", "sync-secret-service"] }
+aes-gcm = "0.10"
+pbkdf2 = { version = "0.12", features = ["simple"] }
+sha2 = "0.10"
+machine-uid = "0.5"
+rand = "0.8"
 
 [dev-dependencies]
 assert_cmd = "2"

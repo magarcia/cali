@@ -89,7 +89,7 @@ fn show_debug_info(
     eprintln!("Sources ({}):", config.sources.len());
     for source in &config.sources {
         eprintln!("  - [{}]", source.name);
-        eprintln!("    URL: {}", source.url);
+        eprintln!("    URL: <stored in secure storage>");
         eprintln!("    Last sync: {:?}", source.last_sync);
     }
     eprintln!();

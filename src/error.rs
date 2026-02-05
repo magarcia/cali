@@ -117,6 +117,20 @@ pub enum CaliError {
         help("Wait for the current sync to complete or remove the lock file manually.")
     )]
     SyncLocked,
+
+    #[error("Failed to access credential storage: {message}")]
+    #[diagnostic(code(cali::credential_storage))]
+    CredentialStorage {
+        message: String,
+        source: Box<dyn std::error::Error + Send + Sync>,
+    },
+
+    #[error("Credential not found for calendar '{name}'")]
+    #[diagnostic(
+        code(cali::credential_not_found),
+        help("The calendar URL may not have been stored. Try removing and re-adding the calendar.")
+    )]
+    CredentialNotFound { name: String },
 }
 
 impl CaliError {
@@ -146,6 +160,20 @@ impl CaliError {
             path,
             source: source.into(),
         }
+    }
+
+    pub fn credential_storage(
+        message: String,
+        source: impl Into<Box<dyn std::error::Error + Send + Sync>>,
+    ) -> Self {
+        Self::CredentialStorage {
+            message,
+            source: source.into(),
+        }
+    }
+
+    pub fn credential_not_found(name: String) -> Self {
+        Self::CredentialNotFound { name }
     }
 }
 

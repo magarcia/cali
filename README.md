@@ -57,12 +57,14 @@ Getting Started
 
     ```
     # Add a work calendar
-    cali config add work "[https://calendar.google.com/calendar/ical/](https://calendar.google.com/calendar/ical/)..."
+    cali config add work "https://calendar.google.com/calendar/ical/..."
 
     # Add a personal calendar
-    cali config add personal "[https://p58-caldav.icloud.com/](https://p58-caldav.icloud.com/)..."
+    cali config add personal "https://p58-caldav.icloud.com/..."
 
     ```
+
+    Calendar URLs are automatically stored securely in your system keychain.
 
 3.  **Run it:**
 
@@ -117,15 +119,35 @@ cache_window_days = 365
 
 For chrono format strings reference, see: https://docs.rs/chrono/latest/chrono/format/strftime/
 
-### Data Management
+### Calendar Management
 
 -   **Refresh manually:** `cali config refresh`
 
 -   **List sources:** `cali config list`
 
+-   **Show URLs:** `cali config list --show-urls` (URLs are hidden by default for security)
+
 -   **Remove a source:** `cali config remove <name>` or `cali config remove` (interactive)
 
 -   **Edit config:** `cali config edit` (opens in $EDITOR)
+
+### Security
+
+Calendar URLs contain authentication tokens and should be kept secure. `cali` automatically stores them using:
+
+-   **macOS:** System Keychain
+-   **Linux:** Secret Service (gnome-keyring, KWallet)
+-   **Fallback:** AES-256-GCM encrypted file (if keychain unavailable)
+
+When you add a calendar, the URL is stored securely and removed from the config file. Existing configs are automatically migrated on first run.
+
+URLs are **hidden by default** in `cali config list`. Use `--show-urls` to display them when needed.
+
+### Data Storage
+
+-   **Config:** `~/.config/cali/config.toml` (calendar metadata, no URLs)
+-   **Cache:** `~/.cache/cali/events.bin` (event data for fast reads)
+-   **Credentials:** System keychain or `~/.config/cali/credentials.enc` (encrypted)
 
 Performance Philosophy
 ----------------------

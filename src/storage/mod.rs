@@ -1,9 +1,11 @@
 mod cache;
 mod config;
+mod credentials;
 mod paths;
 
 pub use cache::{EventCache, EventCacheLoader};
 pub use config::{CalendarSource, Config, ConfigLoader, DisplayConfig, SyncConfig};
+pub use credentials::{CredentialBackend, SecureStorage};
 pub use paths::Paths;
 
 use chrono::{DateTime, Utc};

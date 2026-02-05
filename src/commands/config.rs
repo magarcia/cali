@@ -1,7 +1,7 @@
 use crate::cli::ConfigCommand;
 use crate::commands::sync::spawn_background_sync;
 use crate::error::{CaliError, Result};
-use crate::storage::{CalendarSource, Config, ConfigLoader, Paths};
+use crate::storage::{CalendarSource, Config, ConfigLoader, Paths, SecureStorage};
 use crate::sync::perform_sync_quick;
 use inquire::{Confirm, Text};
 use std::process::Command;
@@ -48,7 +48,7 @@ pub async fn handle_config(action: ConfigCommand) -> Result<()> {
 
             let source = CalendarSource {
                 name: name.clone(),
-                url,
+                url: None,
                 color,
                 last_sync: None,
             };
@@ -58,6 +58,13 @@ pub async fn handle_config(action: ConfigCommand) -> Result<()> {
             new_config.sources.sort_by(|a, b| a.name.cmp(&b.name));
 
             config_loader.save(&new_config)?;
+
+            let secure_storage = SecureStorage::new(paths.config_dir());
+            if let Err(e) = secure_storage.store_url(&name, &url) {
+                new_config.sources.retain(|s| s.name != name);
+                config_loader.save(&new_config).ok();
+                return Err(e);
+            }
             println!("Calendar '{name}' added successfully.");
 
             if Confirm::new("Sync now?")
@@ -92,10 +99,16 @@ pub async fn handle_config(action: ConfigCommand) -> Result<()> {
 
             config.sources.remove(index);
             config_loader.save(&config)?;
+
+            let secure_storage = SecureStorage::new(paths.config_dir());
+            if let Err(e) = secure_storage.delete_url(&name) {
+                eprintln!("Warning: Failed to delete credentials for '{}': {}", name, e);
+            }
+
             println!("Calendar '{name}' removed.");
         }
 
-        ConfigCommand::List => {
+        ConfigCommand::List { show_urls } => {
             if !config_loader.exists() {
                 return Err(CaliError::ConfigNotFound);
             }
@@ -109,16 +122,36 @@ pub async fn handle_config(action: ConfigCommand) -> Result<()> {
             }
 
             println!("Calendar sources:");
-            for source in &config.sources {
-                let last_sync = source
-                    .last_sync
-                    .map(|d| d.format("%Y-%m-%d %H:%M").to_string())
-                    .unwrap_or_else(|| "Never".to_string());
-                println!("  [{}]", source.name);
-                println!("    URL: {}", source.url);
-                println!("    Color: {}", source.color);
-                println!("    Last sync: {last_sync}");
-                println!();
+
+            if show_urls {
+                let secure_storage = SecureStorage::new(paths.config_dir());
+                for source in &config.sources {
+                    let last_sync = source
+                        .last_sync
+                        .map(|d| d.format("%Y-%m-%d %H:%M").to_string())
+                        .unwrap_or_else(|| "Never".to_string());
+                    println!("  [{}]", source.name);
+
+                    let url = secure_storage
+                        .get_url(&source.name)?
+                        .unwrap_or_else(|| "<not found>".to_string());
+                    println!("    URL: {}", url);
+
+                    println!("    Color: {}", source.color);
+                    println!("    Last sync: {last_sync}");
+                    println!();
+                }
+            } else {
+                for source in &config.sources {
+                    let last_sync = source
+                        .last_sync
+                        .map(|d| d.format("%Y-%m-%d %H:%M").to_string())
+                        .unwrap_or_else(|| "Never".to_string());
+                    println!("  [{}]", source.name);
+                    println!("    Color: {}", source.color);
+                    println!("    Last sync: {last_sync}");
+                    println!();
+                }
             }
         }
 

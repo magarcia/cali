@@ -67,7 +67,11 @@ pub enum ConfigCommand {
     },
 
     /// List all calendar sources
-    List,
+    List {
+        /// Show calendar URLs (hidden by default for security)
+        #[arg(long)]
+        show_urls: bool,
+    },
 
     /// Refresh all calendar sources
     Refresh,

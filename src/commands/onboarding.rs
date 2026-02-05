@@ -1,7 +1,7 @@
 use crate::commands::config::setup_ctrlc;
 use crate::commands::sync::spawn_background_sync;
 use crate::error::{CaliError, Result};
-use crate::storage::{CalendarSource, Config, ConfigLoader, Paths};
+use crate::storage::{CalendarSource, Config, ConfigLoader, Paths, SecureStorage};
 use crate::sync::perform_sync_quick;
 use inquire::{Confirm, Text};
 
@@ -44,9 +44,12 @@ pub async fn run_onboarding() -> Result<()> {
         })
         .unwrap_or_else(|_| "#ffffff".to_string());
 
+    let secure_storage = SecureStorage::new(paths.config_dir());
+    secure_storage.store_url(&name, &url)?;
+
     let source = CalendarSource {
         name: name.clone(),
-        url,
+        url: None,
         color,
         last_sync: None,
     };
