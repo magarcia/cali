@@ -165,9 +165,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
           git add Formula/cali.rb
           git commit -m "chore: update Homebrew formula for v${{ needs.create-release.outputs.version }}"
-          git push
+          git push origin main
 
   finalize:
     name: Finalize Release
