@@ -33,9 +33,8 @@ pub fn expand_recurrence(
         }
 
         // Partition into base event and overrides
-        let (base_events, overrides): (Vec<_>, Vec<_>) = group
-            .iter()
-            .partition(|e| e.recurrence_id.is_none());
+        let (base_events, overrides): (Vec<_>, Vec<_>) =
+            group.iter().partition(|e| e.recurrence_id.is_none());
 
         // Recurring events: use first base event as template
         if let Some(base) = base_events.first() {
@@ -56,7 +55,9 @@ pub fn expand_recurrence(
                     Ok(instances) => {
                         for instance in instances {
                             // Check if this occurrence has an override
-                            if let Some(override_event) = override_map.get(&instance.start.timestamp()) {
+                            if let Some(override_event) =
+                                override_map.get(&instance.start.timestamp())
+                            {
                                 // Use the override instead if it's in the window
                                 if event_overlaps(override_event, window_start, window_end) {
                                     expanded.push((*override_event).clone());
@@ -115,10 +116,11 @@ fn expand_rrule_event(
             let tz_name = tz.name();
             let ics_input = format!("DTSTART;TZID={tz_name}:{start_str}\nRRULE:{rrule_str}");
 
-            let mut rrule_set: RRuleSet = ics_input.parse().map_err(|e| CaliError::RruleFailure {
-                name: base.title.to_string(),
-                source: Box::new(e),
-            })?;
+            let mut rrule_set: RRuleSet =
+                ics_input.parse().map_err(|e| CaliError::RruleFailure {
+                    name: base.title.to_string(),
+                    source: Box::new(e),
+                })?;
 
             for exdate in &base.exdates {
                 let exdate_tz = tz_wrapped.from_utc_datetime(&exdate.naive_utc());

@@ -1,4 +1,5 @@
 use assert_cmd::Command;
+use tempfile::TempDir;
 
 #[allow(deprecated)]
 fn cali_command() -> Command {
@@ -16,9 +17,15 @@ fn test_shows_help() {
 }
 
 #[test]
-fn test_config_list_runs() {
-    // Just check that the command runs (with or without config)
-    cali_command().args(["config", "list"]).assert().success();
+fn test_config_list_no_config() {
+    // Use a temp directory to ensure no config exists
+    let temp_dir = TempDir::new().unwrap();
+    cali_command()
+        .env("HOME", temp_dir.path())
+        .env("XDG_CONFIG_HOME", temp_dir.path())
+        .args(["config", "list"])
+        .assert()
+        .failure();
 }
 
 #[test]

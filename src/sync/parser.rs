@@ -83,14 +83,24 @@ fn parse_event(source: &str, event: &IcalEvent, default_tzid: Option<&str>) -> R
                 if let Some(ref value) = prop.value {
                     let exdate_tzid = extract_tzid(prop).or_else(|| tzid.clone());
                     for date_str in value.split(',') {
-                        if let Ok(dt) = parse_exdate_value(date_str.trim(), exdate_tzid.as_deref().or(default_tzid)) {
+                        if let Ok(dt) = parse_exdate_value(
+                            date_str.trim(),
+                            exdate_tzid.as_deref().or(default_tzid),
+                        ) {
                             exdates.push(dt);
                         }
                     }
                 }
             }
             "RECURRENCE-ID" => {
-                recurrence_id = parse_date_time(prop, extract_tzid(prop).as_deref().or(tzid.as_deref()).or(default_tzid)).ok();
+                recurrence_id = parse_date_time(
+                    prop,
+                    extract_tzid(prop)
+                        .as_deref()
+                        .or(tzid.as_deref())
+                        .or(default_tzid),
+                )
+                .ok();
             }
             _ => {}
         }
