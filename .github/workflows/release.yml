@@ -78,12 +78,15 @@ jobs:
         with:
           key: ${{ matrix.target }}
 
-      - name: Install cross compilation tools
-        if: matrix.target == 'aarch64-unknown-linux-musl'
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y musl-tools musl-dev
-          rustup target add aarch64-unknown-linux-musl
+          sudo apt-get install -y libdbus-1-dev pkg-config
+          if [ "${{ matrix.target }}" == "aarch64-unknown-linux-musl" ]; then
+            sudo apt-get install -y musl-tools musl-dev
+            rustup target add aarch64-unknown-linux-musl
+          fi
 
       - name: Build binary
         run: |
