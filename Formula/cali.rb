@@ -15,10 +15,7 @@ class Cali < Formula
   end
 
   on_linux do
-    if Hardware::CPU.arm?
-      url "https://github.com/magarcia/cali/releases/download/v#{version}/cali-#{version}-aarch64-unknown-linux-musl.tar.gz"
-      sha256 "PLACEHOLDER_LINUX_ARM_SHA256"
-    else
+    if Hardware::CPU.intel?
       url "https://github.com/magarcia/cali/releases/download/v#{version}/cali-#{version}-x86_64-unknown-linux-musl.tar.gz"
       sha256 "PLACEHOLDER_LINUX_X86_SHA256"
     end

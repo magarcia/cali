@@ -64,10 +64,8 @@ jobs:
             os: macos-latest
           - target: x86_64-apple-darwin
             os: macos-15-intel
-          # Linux builds
+          # Linux build
           - target: x86_64-unknown-linux-musl
-            os: ubuntu-latest
-          - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -83,18 +81,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libdbus-1-dev pkg-config
-          if [ "${{ matrix.target }}" == "aarch64-unknown-linux-musl" ]; then
-            sudo apt-get install -y musl-tools musl-dev
-            rustup target add aarch64-unknown-linux-musl
-          fi
 
       - name: Build binary
-        run: |
-          if [ "${{ matrix.target }}" == "aarch64-unknown-linux-musl" ]; then
-            cargo build --release --target ${{ matrix.target }}
-          else
-            cargo build --release
-          fi
+        run: cargo build --release
 
       - name: Create archive
         id: archive
@@ -103,13 +92,7 @@ jobs:
           TARGET="${{ matrix.target }}"
           ARCHIVE_NAME="cali-${VERSION}-${TARGET}.tar.gz"
 
-          # Handle cross-compilation output path
-          if [ "${{ matrix.target }}" == "aarch64-unknown-linux-musl" ]; then
-            cd target/${{ matrix.target }}/release
-          else
-            cd target/release
-          fi
-
+          cd target/release
           tar czf "../../${ARCHIVE_NAME}" cali
           cd ../..
 
@@ -168,13 +151,11 @@ jobs:
           # Extract checksums from .sha256 files
           ARM64_MAC_SHA=$(grep "cali-${VERSION}-aarch64-apple-darwin.tar.gz" artifacts/cali-${VERSION}-aarch64-apple-darwin.tar.gz.sha256 | cut -d' ' -f1)
           INTEL_MAC_SHA=$(grep "cali-${VERSION}-x86_64-apple-darwin.tar.gz" artifacts/cali-${VERSION}-x86_64-apple-darwin.tar.gz.sha256 | cut -d' ' -f1)
-          LINUX_ARM_SHA=$(grep "cali-${VERSION}-aarch64-unknown-linux-musl.tar.gz" artifacts/cali-${VERSION}-aarch64-unknown-linux-musl.tar.gz.sha256 | cut -d' ' -f1)
           LINUX_X86_SHA=$(grep "cali-${VERSION}-x86_64-unknown-linux-musl.tar.gz" artifacts/cali-${VERSION}-x86_64-unknown-linux-musl.tar.gz.sha256 | cut -d' ' -f1)
 
           # Update Formula/cali.rb
           sed -i "s/PLACEHOLDER_ARM64_SHA256/${ARM64_MAC_SHA}/" Formula/cali.rb
           sed -i "s/PLACEHOLDER_INTEL_SHA256/${INTEL_MAC_SHA}/" Formula/cali.rb
-          sed -i "s/PLACEHOLDER_LINUX_ARM_SHA256/${LINUX_ARM_SHA}/" Formula/cali.rb
           sed -i "s/PLACEHOLDER_LINUX_X86_SHA256/${LINUX_X86_SHA}/" Formula/cali.rb
 
           # Also update version in formula
