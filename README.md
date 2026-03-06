@@ -19,19 +19,18 @@ Examples
 ```
 $ cali
 
-TUESDAY, OCTOBER 24
+Today (Tue, Oct 24)
 
-   09:00  Standup meeting [work]
-   09:30  Code review [work]
-   12:00  Lunch [personal]
+   09:00am - 09:30am  Standup meeting
+   09:30am - 10:30am  Code review
+   12:00pm - 01:00pm  Lunch
 
- | 13:00  PROJECT KICKOFF
- |        Duration: 1h (15m remaining)
- |        Location: Meeting Room A
- |        [work]
+ > 01:00pm - 02:00pm  PROJECT KICKOFF ◀ NOW
+   │ Meeting Room A
+   │ 15m remaining
 
-   14:00  Deep work block [work]
-   18:00  Grocery run [personal]
+   02:00pm - 05:00pm  Deep work block
+   06:00pm - 07:00pm  Grocery run
 
 ```
 
@@ -57,10 +56,10 @@ Getting Started
 
     ```
     # Add a work calendar
-    cali config add work "https://calendar.google.com/calendar/ical/..."
+    cali source add work "https://calendar.google.com/calendar/ical/..."
 
     # Add a personal calendar
-    cali config add personal "https://p58-caldav.icloud.com/..."
+    cali source add personal "https://p58-caldav.icloud.com/..."
 
     ```
 
@@ -94,6 +93,70 @@ cargo install --path .
 
 ```
 
+Usage
+-----
+
+### Output Formats
+
+```
+cali                      # Human-readable (default)
+cali --output json        # Machine-readable JSON
+cali --output llm         # Concise format for LLM/agent consumption
+```
+
+JSON output emits an array of event objects with RFC 3339 timestamps:
+
+```json
+[
+  {
+    "id": "abc123",
+    "title": "Standup",
+    "start": "2026-03-06T09:00:00+01:00",
+    "end": "2026-03-06T09:30:00+01:00",
+    "source": "work",
+    "all_day": false,
+    "location": "Room A"
+  }
+]
+```
+
+### Global Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--output <FORMAT>` | `-o` | Output format: `text`, `json`, `llm` |
+| `--verbose` | `-v` | Show detailed output (paths, sync status) |
+| `--quiet` | `-q` | Suppress non-essential messages |
+| `--no-color` | | Disable colored output |
+| `--version` | | Show version with commit hash and build date |
+| `--help` | | Show help with usage examples |
+
+The `NO_COLOR` environment variable is also respected.
+
+### Shell Completions
+
+Generate completions for your shell:
+
+```
+cali completions bash > /etc/bash_completion.d/cali
+cali completions zsh > ~/.zfunc/_cali
+cali completions fish > ~/.config/fish/completions/cali.fish
+```
+
+### Calendar Management
+
+-   **Add a source:** `cali source add <name> <url>` (or interactive: `cali source add`)
+
+-   **List sources:** `cali source list`
+
+-   **Show URLs:** `cali source list --show-urls` (URLs are hidden by default for security)
+
+-   **Remove a source:** `cali source remove <name>` (or interactive: `cali source remove`)
+
+-   **Sync calendars:** `cali sync`
+
+-   **Edit config:** `cali config edit` (opens in $EDITOR)
+
 Configuration
 -------------
 
@@ -119,18 +182,6 @@ cache_window_days = 365
 
 For chrono format strings reference, see: https://docs.rs/chrono/latest/chrono/format/strftime/
 
-### Calendar Management
-
--   **Refresh manually:** `cali config refresh`
-
--   **List sources:** `cali config list`
-
--   **Show URLs:** `cali config list --show-urls` (URLs are hidden by default for security)
-
--   **Remove a source:** `cali config remove <name>` or `cali config remove` (interactive)
-
--   **Edit config:** `cali config edit` (opens in $EDITOR)
-
 ### Security
 
 Calendar URLs contain authentication tokens and should be kept secure. `cali` automatically stores them using:
@@ -141,13 +192,24 @@ Calendar URLs contain authentication tokens and should be kept secure. `cali` au
 
 When you add a calendar, the URL is stored securely and removed from the config file. Existing configs are automatically migrated on first run.
 
-URLs are **hidden by default** in `cali config list`. Use `--show-urls` to display them when needed.
+URLs are **hidden by default** in `cali source list`. Use `--show-urls` to display them when needed.
 
 ### Data Storage
 
 -   **Config:** `~/.config/cali/config.toml` (calendar metadata, no URLs)
 -   **Cache:** `~/.cache/cali/events.bin` (event data for fast reads)
 -   **Credentials:** System keychain or `~/.config/cali/credentials.enc` (encrypted)
+
+### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | General error |
+| `2` | Usage error (invalid arguments or dates) |
+| `3` | Configuration error |
+| `4` | Sync/network error |
+| `130` | Interrupted (Ctrl+C) |
 
 Performance Philosophy
 ----------------------
