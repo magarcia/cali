@@ -23,9 +23,10 @@ fn test_config_loader_write_and_load() -> Result<(), Box<dyn std::error::Error>>
     let loader = ConfigLoader::new(paths.clone());
 
     let mut config = Config::default();
+    config.credentials_migrated = true;
     config.sources.push(CalendarSource {
         name: "work".to_string(),
-        url: "https://example.com/calendar.ics".to_string(),
+        url: Some("https://example.com/calendar.ics".to_string()),
         color: "#ff6b6b".to_string(),
         last_sync: Some(Utc::now()),
     });
@@ -38,7 +39,10 @@ fn test_config_loader_write_and_load() -> Result<(), Box<dyn std::error::Error>>
 
     assert_eq!(loaded.sources.len(), 1);
     assert_eq!(loaded.sources[0].name, "work");
-    assert_eq!(loaded.sources[0].url, "https://example.com/calendar.ics");
+    assert_eq!(
+        loaded.sources[0].url,
+        Some("https://example.com/calendar.ics".to_string())
+    );
     assert_eq!(loaded.sources[0].color, "#ff6b6b");
     assert!(loaded.sources[0].last_sync.is_some());
 
@@ -155,15 +159,16 @@ fn test_config_with_multiple_sources() -> Result<(), Box<dyn std::error::Error>>
     let loader = ConfigLoader::new(paths.clone());
 
     let mut config = Config::default();
+    config.credentials_migrated = true;
     config.sources.push(CalendarSource {
         name: "work".to_string(),
-        url: "https://example.com/work.ics".to_string(),
+        url: Some("https://example.com/work.ics".to_string()),
         color: "#ff6b6b".to_string(),
         last_sync: None,
     });
     config.sources.push(CalendarSource {
         name: "personal".to_string(),
-        url: "https://example.com/personal.ics".to_string(),
+        url: Some("https://example.com/personal.ics".to_string()),
         color: "#4ecdc4".to_string(),
         last_sync: None,
     });

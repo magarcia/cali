@@ -37,7 +37,7 @@ END:VCALENDAR"#,
     let config = Config {
         sources: vec![CalendarSource {
             name: "test".to_string(),
-            url: mock_server.uri(),
+            url: Some(mock_server.uri()),
             color: "#ffffff".to_string(),
             last_sync: None,
         }],
@@ -69,13 +69,13 @@ async fn test_fetch_calendars_multiple_sources() {
         sources: vec![
             CalendarSource {
                 name: "cal1".to_string(),
-                url: mock_server1.uri(),
+                url: Some(mock_server1.uri()),
                 color: "#ffffff".to_string(),
                 last_sync: None,
             },
             CalendarSource {
                 name: "cal2".to_string(),
-                url: mock_server2.uri(),
+                url: Some(mock_server2.uri()),
                 color: "#ffffff".to_string(),
                 last_sync: None,
             },
@@ -99,7 +99,7 @@ async fn test_fetch_calendars_handles_404() {
     let config = Config {
         sources: vec![CalendarSource {
             name: "test".to_string(),
-            url: mock_server.uri(),
+            url: Some(mock_server.uri()),
             color: "#ffffff".to_string(),
             last_sync: None,
         }],
@@ -123,7 +123,7 @@ async fn test_fetch_calendars_handles_timeout() {
     let config = Config {
         sources: vec![CalendarSource {
             name: "test".to_string(),
-            url: mock_server.uri(),
+            url: Some(mock_server.uri()),
             color: "#ffffff".to_string(),
             last_sync: None,
         }],
@@ -319,7 +319,7 @@ END:VCALENDAR"#
     let config = Config {
         sources: vec![CalendarSource {
             name: "test".to_string(),
-            url: mock_server.uri(),
+            url: Some(mock_server.uri()),
             color: "#ffffff".to_string(),
             last_sync: None,
         }],

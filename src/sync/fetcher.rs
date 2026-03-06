@@ -10,14 +10,25 @@ pub async fn fetch_calendars(config: &Config) -> Result<Vec<(String, String)>> {
         return Ok(Vec::new());
     }
 
-    let paths = Paths::new()?;
-    let secure_storage = SecureStorage::new(paths.config_dir());
+    let needs_secure = config.sources.iter().any(|s| s.url.is_none());
+    let secure_storage = if needs_secure {
+        let paths = Paths::new()?;
+        Some(SecureStorage::new(paths.config_dir()))
+    } else {
+        None
+    };
 
     let mut sources_with_urls = Vec::new();
     for source in &config.sources {
-        let url = secure_storage
-            .get_url(&source.name)?
-            .ok_or_else(|| CaliError::credential_not_found(source.name.clone()))?;
+        let url = if let Some(ref url) = source.url {
+            url.clone()
+        } else {
+            secure_storage
+                .as_ref()
+                .unwrap()
+                .get_url(&source.name)?
+                .ok_or_else(|| CaliError::credential_not_found(source.name.clone()))?
+        };
         sources_with_urls.push((source.clone(), url));
     }
 
