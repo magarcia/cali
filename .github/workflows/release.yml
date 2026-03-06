@@ -168,8 +168,12 @@ jobs:
           git fetch origin main
           git checkout main
           git add Formula/cali.rb
-          git commit -m "chore: update Homebrew formula for v${{ needs.create-release.outputs.version }}"
-          git push origin main
+          if git diff --cached --quiet; then
+            echo "Formula already up to date, skipping commit"
+          else
+            git commit -m "chore: update Homebrew formula for v${{ needs.create-release.outputs.version }}"
+            git push origin main
+          fi
 
   finalize:
     name: Finalize Release
