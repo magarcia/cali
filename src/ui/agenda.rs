@@ -13,7 +13,7 @@ pub struct EventGroup {
 }
 
 pub fn render_agenda(events: &[Event], grep: Option<&str>) -> String {
-    let use_ansi = crate::ui::styles::is_terminal();
+    let use_ansi = crate::ui::styles::use_color();
 
     if events.is_empty() {
         let msg = "No events found";

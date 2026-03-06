@@ -33,6 +33,10 @@ pub struct Args {
     #[arg(short = 'o', long = "output", value_name = "FORMAT", default_value = "text", global = true)]
     pub output_format: OutputFormat,
 
+    /// Disable colored output
+    #[arg(long, global = true)]
+    pub no_color: bool,
+
     /// Show internal sync information
     #[arg(long, hide = true)]
     pub debug_sync: bool,

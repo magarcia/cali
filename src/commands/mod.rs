@@ -13,6 +13,10 @@ use crate::error::Result;
 use crate::storage::{ConfigLoader, Paths};
 
 pub async fn dispatch(args: Args) -> Result<()> {
+    if args.no_color {
+        crate::ui::force_no_color();
+    }
+
     let paths = Paths::new()?;
     let config_loader = ConfigLoader::new(paths.clone());
 

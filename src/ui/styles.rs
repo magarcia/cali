@@ -149,8 +149,22 @@ impl StyledString {
     }
 }
 
-pub fn is_terminal() -> bool {
+use std::sync::atomic::{AtomicBool, Ordering};
+
+static NO_COLOR_FLAG: AtomicBool = AtomicBool::new(false);
+
+pub fn force_no_color() {
+    NO_COLOR_FLAG.store(true, Ordering::Relaxed);
+}
+
+pub fn use_color() -> bool {
     use std::io::IsTerminal;
+    if NO_COLOR_FLAG.load(Ordering::Relaxed) {
+        return false;
+    }
+    if std::env::var_os("NO_COLOR").is_some() {
+        return false;
+    }
     std::io::stdout().is_terminal()
 }
 
