@@ -27,6 +27,20 @@ pub enum OutputFormat {
 #[command(about = "A minimalist, offline-first CLI calendar", long_about = None)]
 #[command(version = build_version())]
 #[command(help_expected = true)]
+#[command(after_help = "\
+EXAMPLES:
+    cali                          Show today's events
+    cali tomorrow                 Show tomorrow
+    cali week                     Show this week
+    cali weekend                  Show Saturday & Sunday
+    cali \"next friday\"            Show next Friday
+    cali \"mon to wed\"             Show Monday through Wednesday
+    cali -g standup               Filter events by search term
+    cali -f 2026-01-01 -t 2026-01-31   Date range with ISO dates
+    cali --output json            Machine-readable JSON output
+    cali source add work <url>    Add a calendar source
+    cali source list              List all calendar sources
+    cali sync                     Refresh all calendars")]
 pub struct Args {
     /// Natural language date filter (e.g., "tomorrow", "next friday", "weekend")
     #[arg(value_name = "DATE", conflicts_with_all = ["from", "to"])]
