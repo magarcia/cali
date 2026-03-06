@@ -4,6 +4,7 @@ use crate::date::parse_date;
 use crate::error::{CaliError, Result};
 use crate::storage::{ConfigLoader, Event, EventCacheLoader, Paths};
 use crate::ui::{filter_events, filter_events_by_range, render_agenda};
+use std::collections::HashMap;
 
 pub async fn show_agenda(args: Args) -> Result<()> {
     let paths = Paths::new()?;
@@ -74,11 +75,17 @@ pub async fn show_agenda(args: Args) -> Result<()> {
     let filtered = filter_events_by_range(&events, start, end);
     let filtered = filter_events(&filtered, args.grep.as_deref());
 
+    let source_colors: HashMap<String, String> = config
+        .sources
+        .iter()
+        .map(|s| (s.name.clone(), s.color.clone()))
+        .collect();
+
     match args.output_format {
-        OutputFormat::Json => print_json(&filtered),
+        OutputFormat::Json => print_json(&filtered, &source_colors),
         OutputFormat::Llm => print_llm(&filtered),
         OutputFormat::Text => {
-            let output = render_agenda(&filtered, args.grep.as_deref());
+            let output = render_agenda(&filtered, args.grep.as_deref(), &source_colors);
             println!("{output}");
         }
     }
@@ -129,11 +136,12 @@ fn print_llm(events: &[Event]) {
         if let Some(ref loc) = event.location {
             print!(" @ {loc}");
         }
+        print!(" [{}]", event.source);
         println!();
     }
 }
 
-fn print_json(events: &[Event]) {
+fn print_json(events: &[Event], source_colors: &HashMap<String, String>) {
     use chrono::Local;
     use serde_json::json;
 
@@ -148,6 +156,9 @@ fn print_json(events: &[Event]) {
                 "source": &*e.source,
                 "all_day": e.all_day,
             });
+            if let Some(color) = source_colors.get(&*e.source) {
+                obj["color"] = json!(color);
+            }
             if let Some(ref loc) = e.location {
                 obj["location"] = json!(&**loc);
             }

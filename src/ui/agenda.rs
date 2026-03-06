@@ -12,7 +12,11 @@ pub struct EventGroup {
     pub is_future: bool,
 }
 
-pub fn render_agenda(events: &[Event], grep: Option<&str>) -> String {
+pub fn render_agenda(
+    events: &[Event],
+    grep: Option<&str>,
+    source_colors: &HashMap<String, String>,
+) -> String {
     let use_ansi = crate::ui::styles::use_color();
 
     if events.is_empty() {
@@ -50,7 +54,7 @@ pub fn render_agenda(events: &[Event], grep: Option<&str>) -> String {
         output.push('\n');
 
         for event in &group.events {
-            output.push_str(&render_event(event, &now, use_ansi, is_today));
+            output.push_str(&render_event(event, &now, use_ansi, is_today, source_colors));
         }
 
         output.push('\n');
@@ -64,7 +68,13 @@ pub fn render_agenda(events: &[Event], grep: Option<&str>) -> String {
     output
 }
 
-fn render_event(event: &Event, now: &DateTime<Utc>, use_ansi: bool, _is_today: bool) -> String {
+fn render_event(
+    event: &Event,
+    now: &DateTime<Utc>,
+    use_ansi: bool,
+    _is_today: bool,
+    source_colors: &HashMap<String, String>,
+) -> String {
     let mut output = String::new();
 
     let is_past = event.end < *now;
@@ -93,6 +103,11 @@ fn render_event(event: &Event, now: &DateTime<Utc>, use_ansi: bool, _is_today: b
         )
     };
 
+    let dot_style = match source_colors.get(&*event.source).and_then(|c| Color::from_hex(c)) {
+        Some(color) => Style::new().fg(color),
+        None => Style::new().dim(),
+    };
+
     let (prefix, title_style) = if is_current {
         ("  > ", Style::new().bold().fg(Color::Green))
     } else if is_past {
@@ -102,9 +117,14 @@ fn render_event(event: &Event, now: &DateTime<Utc>, use_ansi: bool, _is_today: b
     };
 
     output.push_str(prefix);
+    output.push_str(&styled("●", dot_style).render(use_ansi));
+    output.push(' ');
     output.push_str(&styled(&time_str, title_style).render(use_ansi));
     output.push_str("  ");
     output.push_str(&styled(&event.title, title_style).render(use_ansi));
+
+    let source_tag = format!(" [{}]", event.source);
+    output.push_str(&styled(&source_tag, Style::new().dim()).render(use_ansi));
 
     if is_current && use_ansi {
         output.push_str(&styled(" ◀ NOW", Style::new().bold().fg(Color::Yellow)).render(true));
@@ -113,7 +133,7 @@ fn render_event(event: &Event, now: &DateTime<Utc>, use_ansi: bool, _is_today: b
     output.push('\n');
 
     if let Some(ref location) = event.location {
-        output.push_str("    │ ");
+        output.push_str("      │ ");
         output.push_str(&styled(location, Style::new().dim()).render(use_ansi));
         output.push('\n');
     }
@@ -121,7 +141,7 @@ fn render_event(event: &Event, now: &DateTime<Utc>, use_ansi: bool, _is_today: b
     if is_current {
         let remaining = event.end.signed_duration_since(*now);
         let remaining_str = format_duration(remaining);
-        output.push_str("    │ ");
+        output.push_str("      │ ");
         output.push_str(
             &styled(&format!("{remaining_str} remaining"), Style::new().dim()).render(use_ansi),
         );

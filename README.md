@@ -115,6 +115,7 @@ JSON output emits an array of event objects with RFC 3339 timestamps:
     "end": "2026-03-06T09:30:00+01:00",
     "source": "work",
     "all_day": false,
+    "color": "#4285F4",
     "location": "Room A"
   }
 ]
