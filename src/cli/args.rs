@@ -1,5 +1,19 @@
 use clap::{Parser, Subcommand, ValueEnum};
 
+fn build_version() -> &'static str {
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
+    const COMMIT: Option<&str> = option_env!("CALI_COMMIT_HASH");
+    const DATE: Option<&str> = option_env!("CALI_BUILD_DATE");
+
+    match (COMMIT, DATE) {
+        (Some(commit), Some(date)) => {
+            // Leak is fine — called once, lives for the program duration
+            Box::leak(format!("{VERSION} ({commit} {date})").into_boxed_str())
+        }
+        _ => VERSION,
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, ValueEnum)]
 pub enum OutputFormat {
     #[default]
@@ -11,7 +25,7 @@ pub enum OutputFormat {
 #[derive(Parser, Debug)]
 #[command(name = "cali")]
 #[command(about = "A minimalist, offline-first CLI calendar", long_about = None)]
-#[command(version)]
+#[command(version = build_version())]
 #[command(help_expected = true)]
 pub struct Args {
     /// Natural language date filter (e.g., "tomorrow", "next friday", "weekend")
