@@ -18,7 +18,9 @@ pub async fn dispatch(args: Args) -> Result<()> {
 
     if let Some(command) = args.command {
         match command {
-            crate::cli::Command::Config { action } => handle_config(action).await?,
+            crate::cli::Command::Config { action } => {
+                handle_config(action, args.output_format).await?
+            }
             crate::cli::Command::InternalSync => {
                 if !config_loader.exists() {
                     return Err(crate::error::CaliError::ConfigNotFound);

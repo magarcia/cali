@@ -1,4 +1,4 @@
-use crate::cli::ConfigCommand;
+use crate::cli::{ConfigCommand, OutputFormat};
 use crate::commands::sync::spawn_background_sync;
 use crate::error::{CaliError, Result};
 use crate::storage::{CalendarSource, Config, ConfigLoader, Paths, SecureStorage};
@@ -6,7 +6,7 @@ use crate::sync::perform_sync_quick;
 use inquire::{Confirm, Text};
 use std::process::Command;
 
-pub async fn handle_config(action: ConfigCommand) -> Result<()> {
+pub async fn handle_config(action: ConfigCommand, output_format: OutputFormat) -> Result<()> {
     let paths = Paths::new()?;
     let config_loader = ConfigLoader::new(paths.clone());
 
@@ -114,6 +114,32 @@ pub async fn handle_config(action: ConfigCommand) -> Result<()> {
             }
 
             let config = config_loader.load()?;
+
+            if output_format == OutputFormat::Json {
+                let secure_storage = SecureStorage::new(paths.config_dir());
+                let sources_json: Vec<_> = config
+                    .sources
+                    .iter()
+                    .map(|s| {
+                        let mut obj = serde_json::json!({
+                            "name": s.name,
+                            "color": s.color,
+                            "last_sync": s.last_sync,
+                        });
+                        if show_urls {
+                            let url = secure_storage
+                                .get_url(&s.name)
+                                .ok()
+                                .flatten()
+                                .unwrap_or_default();
+                            obj["url"] = serde_json::json!(url);
+                        }
+                        obj
+                    })
+                    .collect();
+                println!("{}", serde_json::to_string_pretty(&sources_json).unwrap());
+                return Ok(());
+            }
 
             if config.sources.is_empty() {
                 println!("No calendar sources configured.");

@@ -1,8 +1,8 @@
-use crate::cli::Args;
+use crate::cli::{Args, OutputFormat};
 use crate::commands::sync::spawn_background_sync;
 use crate::date::parse_date;
 use crate::error::{CaliError, Result};
-use crate::storage::{ConfigLoader, EventCacheLoader, Paths};
+use crate::storage::{ConfigLoader, Event, EventCacheLoader, Paths};
 use crate::ui::{filter_events, filter_events_by_range, render_agenda};
 
 pub async fn show_agenda(args: Args) -> Result<()> {
@@ -57,8 +57,11 @@ pub async fn show_agenda(args: Args) -> Result<()> {
                 eprintln!("No valid cache, triggering sync...");
             }
             spawn_background_sync();
-            // Show a message instead of returning silently
-            eprintln!("Syncing calendars... Run 'cali' again in a moment.");
+            if args.output_format == OutputFormat::Json {
+                println!("[]");
+            } else {
+                eprintln!("Syncing calendars... Run 'cali' again in a moment.");
+            }
             return Ok(());
         }
     };
@@ -66,10 +69,43 @@ pub async fn show_agenda(args: Args) -> Result<()> {
     let filtered = filter_events_by_range(&events, start, end);
     let filtered = filter_events(&filtered, args.grep.as_deref());
 
-    let output = render_agenda(&filtered, args.grep.as_deref());
-    println!("{output}");
+    match args.output_format {
+        OutputFormat::Json => print_json(&filtered),
+        OutputFormat::Text => {
+            let output = render_agenda(&filtered, args.grep.as_deref());
+            println!("{output}");
+        }
+    }
 
     Ok(())
+}
+
+fn print_json(events: &[Event]) {
+    use chrono::Local;
+    use serde_json::json;
+
+    let events_json: Vec<_> = events
+        .iter()
+        .map(|e| {
+            let mut obj = json!({
+                "id": &*e.id,
+                "title": &*e.title,
+                "start": e.start.with_timezone(&Local).to_rfc3339(),
+                "end": e.end.with_timezone(&Local).to_rfc3339(),
+                "source": &*e.source,
+                "all_day": e.all_day,
+            });
+            if let Some(ref loc) = e.location {
+                obj["location"] = json!(&**loc);
+            }
+            if let Some(ref desc) = e.description {
+                obj["description"] = json!(&**desc);
+            }
+            obj
+        })
+        .collect();
+
+    println!("{}", serde_json::to_string_pretty(&events_json).unwrap());
 }
 
 fn show_debug_info(

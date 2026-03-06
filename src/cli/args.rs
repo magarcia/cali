@@ -1,5 +1,12 @@
 use clap::{Parser, Subcommand, ValueEnum};
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, ValueEnum)]
+pub enum OutputFormat {
+    #[default]
+    Text,
+    Json,
+}
+
 #[derive(Parser, Debug)]
 #[command(name = "cali")]
 #[command(about = "A minimalist, offline-first CLI calendar", long_about = None)]
@@ -21,6 +28,10 @@ pub struct Args {
     /// Filter events by search term
     #[arg(short = 'g', long, value_name = "TERM")]
     pub grep: Option<String>,
+
+    /// Output format
+    #[arg(short = 'o', long = "output", value_name = "FORMAT", default_value = "text", global = true)]
+    pub output_format: OutputFormat,
 
     /// Show internal sync information
     #[arg(long, hide = true)]
