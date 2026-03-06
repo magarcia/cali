@@ -22,14 +22,16 @@ fn test_config_loader_write_and_load() -> Result<(), Box<dyn std::error::Error>>
     let paths = Paths::with_base(temp_dir.path());
     let loader = ConfigLoader::new(paths.clone());
 
-    let mut config = Config::default();
-    config.credentials_migrated = true;
-    config.sources.push(CalendarSource {
-        name: "work".to_string(),
-        url: Some("https://example.com/calendar.ics".to_string()),
-        color: "#ff6b6b".to_string(),
-        last_sync: Some(Utc::now()),
-    });
+    let config = Config {
+        credentials_migrated: true,
+        sources: vec![CalendarSource {
+            name: "work".to_string(),
+            url: Some("https://example.com/calendar.ics".to_string()),
+            color: "#ff6b6b".to_string(),
+            last_sync: Some(Utc::now()),
+        }],
+        ..Default::default()
+    };
 
     // Save config
     loader.save(&config)?;
@@ -158,20 +160,24 @@ fn test_config_with_multiple_sources() -> Result<(), Box<dyn std::error::Error>>
     let paths = Paths::with_base(temp_dir.path());
     let loader = ConfigLoader::new(paths.clone());
 
-    let mut config = Config::default();
-    config.credentials_migrated = true;
-    config.sources.push(CalendarSource {
-        name: "work".to_string(),
-        url: Some("https://example.com/work.ics".to_string()),
-        color: "#ff6b6b".to_string(),
-        last_sync: None,
-    });
-    config.sources.push(CalendarSource {
-        name: "personal".to_string(),
-        url: Some("https://example.com/personal.ics".to_string()),
-        color: "#4ecdc4".to_string(),
-        last_sync: None,
-    });
+    let config = Config {
+        credentials_migrated: true,
+        sources: vec![
+            CalendarSource {
+                name: "work".to_string(),
+                url: Some("https://example.com/work.ics".to_string()),
+                color: "#ff6b6b".to_string(),
+                last_sync: None,
+            },
+            CalendarSource {
+                name: "personal".to_string(),
+                url: Some("https://example.com/personal.ics".to_string()),
+                color: "#4ecdc4".to_string(),
+                last_sync: None,
+            },
+        ],
+        ..Default::default()
+    };
 
     loader.save(&config)?;
     let loaded = loader.load()?;
