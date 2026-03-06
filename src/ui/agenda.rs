@@ -54,7 +54,13 @@ pub fn render_agenda(
         output.push('\n');
 
         for event in &group.events {
-            output.push_str(&render_event(event, &now, use_ansi, is_today, source_colors));
+            output.push_str(&render_event(
+                event,
+                &now,
+                use_ansi,
+                is_today,
+                source_colors,
+            ));
         }
 
         output.push('\n');
@@ -103,7 +109,10 @@ fn render_event(
         )
     };
 
-    let dot_style = match source_colors.get(&*event.source).and_then(|c| Color::from_hex(c)) {
+    let dot_style = match source_colors
+        .get(&*event.source)
+        .and_then(|c| Color::from_hex(c))
+    {
         Some(color) => Style::new().fg(color),
         None => Style::new().dim(),
     };

@@ -102,7 +102,10 @@ pub async fn handle_source(action: SourceCommand, output_format: OutputFormat) -
 
             let secure_storage = SecureStorage::new(paths.config_dir());
             if let Err(e) = secure_storage.delete_url(&name) {
-                eprintln!("Warning: Failed to delete credentials for '{}': {}", name, e);
+                eprintln!(
+                    "Warning: Failed to delete credentials for '{}': {}",
+                    name, e
+                );
             }
 
             println!("Calendar '{name}' removed.");

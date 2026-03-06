@@ -1,7 +1,7 @@
 use crate::error::{CaliError, Result};
 use aes_gcm::{
-    aead::{Aead, KeyInit},
     Aes256Gcm, Nonce,
+    aead::{Aead, KeyInit},
 };
 use pbkdf2::pbkdf2_hmac;
 use sha2::Sha256;
@@ -157,12 +157,7 @@ impl SecureStorage {
         })?;
 
         let mut key = [0u8; 32];
-        pbkdf2_hmac::<Sha256>(
-            machine_id.as_bytes(),
-            APP_SALT,
-            PBKDF2_ITERATIONS,
-            &mut key,
-        );
+        pbkdf2_hmac::<Sha256>(machine_id.as_bytes(), APP_SALT, PBKDF2_ITERATIONS, &mut key);
 
         Ok(key)
     }
@@ -221,9 +216,8 @@ impl SecureStorage {
         let ciphertext = &encrypted_data[13..];
 
         let key = self.derive_key()?;
-        let cipher = Aes256Gcm::new_from_slice(&key).map_err(|e| {
-            CaliError::credential_storage("Failed to create cipher".to_string(), e)
-        })?;
+        let cipher = Aes256Gcm::new_from_slice(&key)
+            .map_err(|e| CaliError::credential_storage("Failed to create cipher".to_string(), e))?;
 
         let nonce = Nonce::from_slice(nonce_bytes);
         let plaintext = cipher.decrypt(nonce, ciphertext).map_err(|e| {
@@ -238,7 +232,10 @@ impl SecureStorage {
 
         let credentials: std::collections::HashMap<String, String> =
             serde_json::from_slice(&plaintext).map_err(|e| {
-                CaliError::credential_storage("Failed to parse decrypted credentials".to_string(), e)
+                CaliError::credential_storage(
+                    "Failed to parse decrypted credentials".to_string(),
+                    e,
+                )
             })?;
 
         Ok(credentials)
@@ -253,9 +250,8 @@ impl SecureStorage {
         })?;
 
         let key = self.derive_key()?;
-        let cipher = Aes256Gcm::new_from_slice(&key).map_err(|e| {
-            CaliError::credential_storage("Failed to create cipher".to_string(), e)
-        })?;
+        let cipher = Aes256Gcm::new_from_slice(&key)
+            .map_err(|e| CaliError::credential_storage("Failed to create cipher".to_string(), e))?;
 
         let nonce_bytes = self.generate_nonce();
         let nonce = Nonce::from_slice(&nonce_bytes);
@@ -326,7 +322,10 @@ mod tests {
             .unwrap();
 
         let retrieved = storage.get_url("test-calendar").unwrap();
-        assert_eq!(retrieved, Some("https://example.com/calendar.ics".to_string()));
+        assert_eq!(
+            retrieved,
+            Some("https://example.com/calendar.ics".to_string())
+        );
     }
 
     #[test]

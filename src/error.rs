@@ -36,17 +36,16 @@ pub enum CaliError {
     #[error("Failed to parse config file")]
     #[diagnostic(
         code(cali::config_parse),
-        help("Check your config file for TOML syntax errors, or delete it and run 'cali' to reconfigure.")
+        help(
+            "Check your config file for TOML syntax errors, or delete it and run 'cali' to reconfigure."
+        )
     )]
     ConfigParse {
         source: Box<dyn std::error::Error + Send + Sync>,
     },
 
     #[error("Failed to read cache file: {path}")]
-    #[diagnostic(
-        code(cali::cache_read),
-        help("Run 'cali sync' to rebuild the cache.")
-    )]
+    #[diagnostic(code(cali::cache_read), help("Run 'cali sync' to rebuild the cache."))]
     CacheRead { path: String },
 
     #[error("Failed to write cache file: {path}")]
@@ -79,7 +78,9 @@ pub enum CaliError {
     #[error("Failed to parse ICS data from '{name}': {source}")]
     #[diagnostic(
         code(cali::parse_failure),
-        help("The calendar source may be returning invalid ICS data. Verify the URL points to a valid .ics feed.")
+        help(
+            "The calendar source may be returning invalid ICS data. Verify the URL points to a valid .ics feed."
+        )
     )]
     ParseFailure {
         name: String,
@@ -151,7 +152,9 @@ pub enum CaliError {
     #[error("Failed to access credential storage: {message}")]
     #[diagnostic(
         code(cali::credential_storage),
-        help("Check that your system keychain is accessible, or ensure ~/.config/cali/ is writable for encrypted fallback storage.")
+        help(
+            "Check that your system keychain is accessible, or ensure ~/.config/cali/ is writable for encrypted fallback storage."
+        )
     )]
     CredentialStorage {
         message: String,
@@ -161,7 +164,9 @@ pub enum CaliError {
     #[error("Credential not found for calendar '{name}'")]
     #[diagnostic(
         code(cali::credential_not_found),
-        help("The calendar URL may not have been stored. Try removing and re-adding the calendar.")
+        help(
+            "The calendar URL may not have been stored. Try removing and re-adding the calendar."
+        )
     )]
     CredentialNotFound { name: String },
 }
