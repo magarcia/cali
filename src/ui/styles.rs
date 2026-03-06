@@ -124,18 +124,8 @@ pub fn styled(text: &str, style: Style) -> StyledString {
     }
 }
 
-#[allow(dead_code)]
-pub fn bold(text: &str) -> StyledString {
-    styled(text, Style::new().bold())
-}
-
 pub fn dim(text: &str) -> StyledString {
     styled(text, Style::new().dim())
-}
-
-#[allow(dead_code)]
-pub fn colored(text: &str, color: Color) -> StyledString {
-    styled(text, Style::new().fg(color))
 }
 
 pub struct StyledString {
