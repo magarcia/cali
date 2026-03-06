@@ -1,16 +1,17 @@
 use cali::cli::Args;
 use cali::commands;
 use clap::Parser;
-use miette::Result;
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() {
     miette::set_panic_hook();
 
     let args = Args::parse();
 
-    commands::dispatch(args)
-        .await
-        .map_err(|e| miette::miette!(e))?;
-    Ok(())
+    if let Err(e) = commands::dispatch(args).await {
+        let code = e.exit_code();
+        let report = miette::miette!(e);
+        eprintln!("{report:?}");
+        std::process::exit(code);
+    }
 }

@@ -134,6 +134,21 @@ pub enum CaliError {
 }
 
 impl CaliError {
+    pub fn exit_code(&self) -> i32 {
+        match self {
+            CaliError::DateParse { .. } | CaliError::InvalidUrl { .. } => 2,
+            CaliError::ConfigNotFound
+            | CaliError::ConfigRead { .. }
+            | CaliError::ConfigWrite { .. }
+            | CaliError::ConfigParse { .. }
+            | CaliError::NoSources
+            | CaliError::SourceExists { .. }
+            | CaliError::SourceNotFound { .. } => 3,
+            CaliError::FetchFailure { .. } | CaliError::SyncLocked => 4,
+            _ => 1,
+        }
+    }
+
     pub fn config_read(path: String) -> Self {
         Self::ConfigRead { path }
     }
