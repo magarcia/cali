@@ -36,6 +36,7 @@ pbkdf2 = { version = "0.12", features = ["simple"] }
 sha2 = "0.10"
 machine-uid = "0.5"
 rand = "0.8"
+libc = "0.2"
 
 [dev-dependencies]
 assert_cmd = "2"
