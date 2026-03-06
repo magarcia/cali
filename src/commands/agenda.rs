@@ -20,10 +20,15 @@ pub async fn show_agenda(args: Args) -> Result<()> {
         return Err(CaliError::NoSources);
     }
 
-    // Debug sync info
     if args.debug_sync {
         show_debug_info(&config, &cache_loader, &paths)?;
         return Ok(());
+    }
+
+    if args.verbose {
+        eprintln!("Config: {}", paths.config_file().display());
+        eprintln!("Cache: {}", paths.cache_file().display());
+        eprintln!("Sources: {}", config.sources.len());
     }
 
     let date_range = if let Some(date_str) = args.date {
@@ -45,7 +50,7 @@ pub async fn show_agenda(args: Args) -> Result<()> {
                 );
             }
             if cache_loader.is_stale(config.sync.sync_interval_minutes * 60)? {
-                if args.debug_sync {
+                if args.verbose {
                     eprintln!("Cache is stale, triggering background sync...");
                 }
                 spawn_background_sync();
@@ -53,13 +58,13 @@ pub async fn show_agenda(args: Args) -> Result<()> {
             cache.events
         }
         _ => {
-            if args.debug_sync {
+            if args.verbose {
                 eprintln!("No valid cache, triggering sync...");
             }
             spawn_background_sync();
             if args.output_format == OutputFormat::Json {
                 println!("[]");
-            } else {
+            } else if !args.quiet {
                 eprintln!("Syncing calendars... Run 'cali' again in a moment.");
             }
             return Ok(());

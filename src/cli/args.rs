@@ -37,6 +37,14 @@ pub struct Args {
     #[arg(long, global = true)]
     pub no_color: bool,
 
+    /// Show detailed output
+    #[arg(short = 'v', long, global = true)]
+    pub verbose: bool,
+
+    /// Suppress non-essential output
+    #[arg(short = 'q', long, global = true, conflicts_with = "verbose")]
+    pub quiet: bool,
+
     /// Show internal sync information
     #[arg(long, hide = true)]
     pub debug_sync: bool,
