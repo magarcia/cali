@@ -5,6 +5,7 @@ pub enum OutputFormat {
     #[default]
     Text,
     Json,
+    Llm,
 }
 
 #[derive(Parser, Debug)]

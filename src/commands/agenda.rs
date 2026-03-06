@@ -76,6 +76,7 @@ pub async fn show_agenda(args: Args) -> Result<()> {
 
     match args.output_format {
         OutputFormat::Json => print_json(&filtered),
+        OutputFormat::Llm => print_llm(&filtered),
         OutputFormat::Text => {
             let output = render_agenda(&filtered, args.grep.as_deref());
             println!("{output}");
@@ -83,6 +84,53 @@ pub async fn show_agenda(args: Args) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn print_llm(events: &[Event]) {
+    use chrono::Local;
+
+    if events.is_empty() {
+        println!("No events.");
+        return;
+    }
+
+    let today = crate::date::today();
+    let mut current_date = None;
+
+    for event in events {
+        let local_start = event.start.with_timezone(&Local);
+        let date = local_start.date_naive();
+
+        if current_date != Some(date) {
+            if current_date.is_some() {
+                println!();
+            }
+            let label = if date == today {
+                format!("Today ({})", date.format("%Y-%m-%d"))
+            } else {
+                date.format("%Y-%m-%d %A").to_string()
+            };
+            println!("# {label}");
+            current_date = Some(date);
+        }
+
+        let local_end = event.end.with_timezone(&Local);
+        let time = if event.all_day {
+            "all-day".to_string()
+        } else {
+            format!(
+                "{}-{}",
+                local_start.format("%H:%M"),
+                local_end.format("%H:%M")
+            )
+        };
+
+        print!("- {time} {}", event.title);
+        if let Some(ref loc) = event.location {
+            print!(" @ {loc}");
+        }
+        println!();
+    }
 }
 
 fn print_json(events: &[Event]) {
