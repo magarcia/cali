@@ -1,4 +1,4 @@
-use crate::cli::{ConfigCommand, OutputFormat};
+use crate::cli::{ConfigCommand, OutputFormat, SourceCommand};
 use crate::commands::sync::spawn_background_sync;
 use crate::error::{CaliError, Result};
 use crate::storage::{CalendarSource, Config, ConfigLoader, Paths, SecureStorage};
@@ -6,12 +6,12 @@ use crate::sync::perform_sync_quick;
 use inquire::{Confirm, Text};
 use std::process::Command;
 
-pub async fn handle_config(action: ConfigCommand, output_format: OutputFormat) -> Result<()> {
+pub async fn handle_source(action: SourceCommand, output_format: OutputFormat) -> Result<()> {
     let paths = Paths::new()?;
     let config_loader = ConfigLoader::new(paths.clone());
 
     match action {
-        ConfigCommand::Add { name, url, color } => {
+        SourceCommand::Add { name, url, color } => {
             let config = if config_loader.exists() {
                 config_loader.load()?
             } else {
@@ -76,7 +76,7 @@ pub async fn handle_config(action: ConfigCommand, output_format: OutputFormat) -
             }
         }
 
-        ConfigCommand::Remove { name } => {
+        SourceCommand::Remove { name } => {
             let mut config = config_loader.load()?;
 
             let name = name.unwrap_or_else(|| {
@@ -108,7 +108,7 @@ pub async fn handle_config(action: ConfigCommand, output_format: OutputFormat) -
             println!("Calendar '{name}' removed.");
         }
 
-        ConfigCommand::List { show_urls } => {
+        SourceCommand::List { show_urls } => {
             if !config_loader.exists() {
                 return Err(CaliError::ConfigNotFound);
             }
@@ -143,7 +143,7 @@ pub async fn handle_config(action: ConfigCommand, output_format: OutputFormat) -
 
             if config.sources.is_empty() {
                 println!("No calendar sources configured.");
-                println!("Add one with: cali config add <name> <url>");
+                println!("Add one with: cali source add <name> <url>");
                 return Ok(());
             }
 
@@ -180,12 +180,15 @@ pub async fn handle_config(action: ConfigCommand, output_format: OutputFormat) -
                 }
             }
         }
+    }
 
-        ConfigCommand::Refresh => {
-            let config = config_loader.load()?;
-            sync_and_exit(config, paths).await?;
-        }
+    Ok(())
+}
 
+pub async fn handle_config(action: ConfigCommand) -> Result<()> {
+    let paths = Paths::new()?;
+
+    match action {
         ConfigCommand::Edit => {
             let config_path = paths.config_file();
             let editor = std::env::var("EDITOR").unwrap_or_else(|_| "vi".to_string());
@@ -206,6 +209,14 @@ pub async fn handle_config(action: ConfigCommand, output_format: OutputFormat) -
         }
     }
 
+    Ok(())
+}
+
+pub async fn handle_sync() -> Result<()> {
+    let paths = Paths::new()?;
+    let config_loader = ConfigLoader::new(paths.clone());
+    let config = config_loader.load()?;
+    sync_and_exit(config, paths).await?;
     Ok(())
 }
 

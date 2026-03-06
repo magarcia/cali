@@ -44,10 +44,10 @@ pub enum CaliError {
         source: Box<dyn std::error::Error + Send + Sync>,
     },
 
-    #[error("Cache file is corrupted or incompatible. Run 'cali config refresh' to rebuild.")]
+    #[error("Cache file is corrupted or incompatible. Run 'cali sync' to rebuild.")]
     #[diagnostic(
         code(cali::cache_corrupt),
-        help("Run 'cali config refresh' to fetch fresh data.")
+        help("Run 'cali sync' to fetch fresh data.")
     )]
     CacheCorrupt,
 
@@ -79,21 +79,21 @@ pub enum CaliError {
     #[error("Calendar source '{name}' already exists")]
     #[diagnostic(
         code(cali::source_exists),
-        help("Use 'cali config rm {name}' to remove the existing source first.")
+        help("Use 'cali source remove {name}' to remove the existing source first.")
     )]
     SourceExists { name: String },
 
     #[error("Calendar source '{name}' not found")]
     #[diagnostic(
         code(cali::source_not_found),
-        help("Run 'cali config list' to see available sources.")
+        help("Run 'cali source list' to see available sources.")
     )]
     SourceNotFound { name: String },
 
     #[error("No calendar sources configured")]
     #[diagnostic(
         code(cali::no_sources),
-        help("Run 'cali config add <name> <url>' to add a calendar source.")
+        help("Run 'cali source add <name> <url>' to add a calendar source.")
     )]
     NoSources,
 

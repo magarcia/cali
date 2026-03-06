@@ -57,6 +57,13 @@ pub struct Args {
 #[derive(Subcommand, Debug)]
 pub enum Command {
     /// Manage calendar sources
+    Source {
+        #[command(subcommand)]
+        action: SourceCommand,
+    },
+    /// Refresh all calendar sources
+    Sync,
+    /// Edit configuration file
     Config {
         #[command(subcommand)]
         action: ConfigCommand,
@@ -73,7 +80,7 @@ pub enum Command {
 }
 
 #[derive(Subcommand, Debug)]
-pub enum ConfigCommand {
+pub enum SourceCommand {
     /// Add a new calendar source
     Add {
         /// Calendar alias/name
@@ -102,11 +109,11 @@ pub enum ConfigCommand {
         #[arg(long)]
         show_urls: bool,
     },
+}
 
-    /// Refresh all calendar sources
-    Refresh,
-
-    /// Edit configuration file
+#[derive(Subcommand, Debug)]
+pub enum ConfigCommand {
+    /// Open configuration file in $EDITOR
     Edit,
 }
 

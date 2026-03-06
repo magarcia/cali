@@ -23,7 +23,7 @@ fn test_config_list_no_config() {
     cali_command()
         .env("HOME", temp_dir.path())
         .env("XDG_CONFIG_HOME", temp_dir.path())
-        .args(["config", "list"])
+        .args(["source", "list"])
         .assert()
         .failure();
 }

@@ -4,7 +4,7 @@ mod onboarding;
 mod sync;
 
 pub use agenda::show_agenda;
-pub use config::handle_config;
+pub use config::{handle_config, handle_source, handle_sync};
 pub use onboarding::run_onboarding;
 pub use sync::sync_and_exit;
 
@@ -22,9 +22,11 @@ pub async fn dispatch(args: Args) -> Result<()> {
 
     if let Some(command) = args.command {
         match command {
-            crate::cli::Command::Config { action } => {
-                handle_config(action, args.output_format).await?
+            crate::cli::Command::Source { action } => {
+                handle_source(action, args.output_format).await?
             }
+            crate::cli::Command::Sync => handle_sync().await?,
+            crate::cli::Command::Config { action } => handle_config(action).await?,
             crate::cli::Command::Completions { shell } => {
                 use clap::CommandFactory;
                 clap_complete::generate(

@@ -79,7 +79,7 @@ pub async fn run_onboarding() -> Result<()> {
             }
             Err(e) => {
                 eprintln!("Sync failed: {e}");
-                eprintln!("You can try syncing later with: cali config refresh");
+                eprintln!("You can try syncing later with: cali sync");
             }
         }
     }
