@@ -17,28 +17,43 @@ pub enum CaliError {
     ConfigNotFound,
 
     #[error("Failed to read config file: {path}")]
-    #[diagnostic(code(cali::config_read))]
+    #[diagnostic(
+        code(cali::config_read),
+        help("Check that the file exists and you have read permissions.")
+    )]
     ConfigRead { path: String },
 
     #[error("Failed to write config file: {path}")]
-    #[diagnostic(code(cali::config_write))]
+    #[diagnostic(
+        code(cali::config_write),
+        help("Check file permissions and available disk space.")
+    )]
     ConfigWrite {
         path: String,
         source: Box<dyn std::error::Error + Send + Sync>,
     },
 
     #[error("Failed to parse config file")]
-    #[diagnostic(code(cali::config_parse))]
+    #[diagnostic(
+        code(cali::config_parse),
+        help("Check your config file for TOML syntax errors, or delete it and run 'cali' to reconfigure.")
+    )]
     ConfigParse {
         source: Box<dyn std::error::Error + Send + Sync>,
     },
 
     #[error("Failed to read cache file: {path}")]
-    #[diagnostic(code(cali::cache_read))]
+    #[diagnostic(
+        code(cali::cache_read),
+        help("Run 'cali sync' to rebuild the cache.")
+    )]
     CacheRead { path: String },
 
     #[error("Failed to write cache file: {path}")]
-    #[diagnostic(code(cali::cache_write))]
+    #[diagnostic(
+        code(cali::cache_write),
+        help("Check file permissions and available disk space.")
+    )]
     CacheWrite {
         path: String,
         source: Box<dyn std::error::Error + Send + Sync>,
@@ -52,28 +67,40 @@ pub enum CaliError {
     CacheCorrupt,
 
     #[error("Failed to fetch calendar '{name}': {source}")]
-    #[diagnostic(code(cali::fetch_failure))]
+    #[diagnostic(
+        code(cali::fetch_failure),
+        help("Check your network connection and verify the calendar URL is correct.")
+    )]
     FetchFailure {
         name: String,
         source: Box<dyn std::error::Error + Send + Sync>,
     },
 
     #[error("Failed to parse ICS data from '{name}': {source}")]
-    #[diagnostic(code(cali::parse_failure))]
+    #[diagnostic(
+        code(cali::parse_failure),
+        help("The calendar source may be returning invalid ICS data. Verify the URL points to a valid .ics feed.")
+    )]
     ParseFailure {
         name: String,
         source: Box<dyn std::error::Error + Send + Sync>,
     },
 
     #[error("Failed to expand recurrence rules for '{name}': {source}")]
-    #[diagnostic(code(cali::rrule_failure))]
+    #[diagnostic(
+        code(cali::rrule_failure),
+        help("The calendar contains an unsupported recurrence rule. The event will be skipped.")
+    )]
     RruleFailure {
         name: String,
         source: Box<dyn std::error::Error + Send + Sync>,
     },
 
     #[error("Invalid URL: {url}")]
-    #[diagnostic(code(cali::invalid_url))]
+    #[diagnostic(
+        code(cali::invalid_url),
+        help("URL must start with http://, https://, or webcal://")
+    )]
     InvalidUrl { url: String },
 
     #[error("Calendar source '{name}' already exists")]
@@ -105,7 +132,10 @@ pub enum CaliError {
     DateParse { input: String },
 
     #[error("IO error: {message}")]
-    #[diagnostic(code(cali::io))]
+    #[diagnostic(
+        code(cali::io),
+        help("Check file permissions and that the path is accessible.")
+    )]
     Io {
         message: String,
         source: Box<dyn std::error::Error + Send + Sync>,
@@ -119,7 +149,10 @@ pub enum CaliError {
     SyncLocked,
 
     #[error("Failed to access credential storage: {message}")]
-    #[diagnostic(code(cali::credential_storage))]
+    #[diagnostic(
+        code(cali::credential_storage),
+        help("Check that your system keychain is accessible, or ensure ~/.config/cali/ is writable for encrypted fallback storage.")
+    )]
     CredentialStorage {
         message: String,
         source: Box<dyn std::error::Error + Send + Sync>,
