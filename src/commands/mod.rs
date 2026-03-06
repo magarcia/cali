@@ -25,6 +25,15 @@ pub async fn dispatch(args: Args) -> Result<()> {
             crate::cli::Command::Config { action } => {
                 handle_config(action, args.output_format).await?
             }
+            crate::cli::Command::Completions { shell } => {
+                use clap::CommandFactory;
+                clap_complete::generate(
+                    shell,
+                    &mut crate::cli::Args::command(),
+                    "cali",
+                    &mut std::io::stdout(),
+                );
+            }
             crate::cli::Command::InternalSync => {
                 if !config_loader.exists() {
                     return Err(crate::error::CaliError::ConfigNotFound);

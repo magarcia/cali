@@ -61,6 +61,12 @@ pub enum Command {
         #[command(subcommand)]
         action: ConfigCommand,
     },
+    /// Generate shell completions
+    Completions {
+        /// Shell to generate completions for
+        #[arg(value_enum)]
+        shell: clap_complete::Shell,
+    },
     /// Internal: background sync worker
     #[command(name = "internal-sync", hide = true)]
     InternalSync,
